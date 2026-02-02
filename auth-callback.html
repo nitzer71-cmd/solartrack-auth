@@ -19,14 +19,17 @@
   <script>
     (function () {
       var hash = window.location.hash;
+      var msg = document.getElementById('msg');
       if (hash && hash.indexOf('access_token=') !== -1) {
         try {
           window.location.replace('solartrack://auth/callback' + hash);
+          msg.textContent = 'Redirecting... You can close this tab if it doesn\'t close automatically.';
+          setTimeout(function () { window.close(); }, 500);
         } catch (e) {
-          document.getElementById('msg').textContent = 'Open SolarTrack to finish signing in. You can close this tab.';
+          msg.textContent = 'Open SolarTrack to finish signing in. You can close this tab.';
         }
       } else {
-        document.getElementById('msg').textContent = 'No sign-in data. Open SolarTrack and try again.';
+        msg.textContent = 'No sign-in data. Open SolarTrack and try again.';
       }
     })();
   </script>
