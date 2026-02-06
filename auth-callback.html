@@ -27,7 +27,9 @@
       var spinner = document.getElementById('spinner');
       if (hash && hash.indexOf('access_token=') !== -1) {
         try {
-          window.location.replace('solartrack://auth/callback' + hash);
+          var isDev = window.location.search.indexOf('dev=1') !== -1;
+          var scheme = isDev ? 'solartrack-dev://' : 'solartrack://';
+          window.location.replace(scheme + 'auth/callback' + hash);
           msg.textContent = 'Redirecting... You can close this tab if it doesn\'t close automatically.';
           setTimeout(function () { window.close(); }, 500);
         } catch (e) {
