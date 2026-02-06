@@ -44,6 +44,10 @@
         msg.innerHTML = 'Redirecting to app...';
         try {
           window.location.replace(scheme + 'auth/callback' + redirectPath);
+          setTimeout(function () {
+            msg.innerHTML = 'You have been successfully signed in to your Google account in SolarTrack.<br>You can close this window.';
+            spinner.style.display = 'none';
+          }, 2000);
           setTimeout(function () { window.close(); }, 500);
         } catch (e) {
           msg.textContent = 'Open SolarTrack to finish signing in. You can close this tab.';
