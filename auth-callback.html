@@ -26,29 +26,31 @@
       var search = window.location.search || '';
       var msg = document.getElementById('msg');
       var spinner = document.getElementById('spinner');
-      // Supabase sends tokens in the hash; some flows use query – accept both
+      // PKCE: Supabase redirects with ?code= in query. Legacy: tokens in hash.
+      var hasCode = search.indexOf('code=') !== -1 || (hash && hash.indexOf('code=') !== -1);
       var hasTokenInHash = hash && hash.indexOf('access_token=') !== -1;
-      var params = {};
-      if (hasTokenInHash) {
-        hash.slice(1).split('&').forEach(function (p) { var kv = p.split('='); if (kv[0] && kv[1]) params[kv[0]] = decodeURIComponent(kv[1]); });
+      var redirectPath = '';
+      if (hasCode) {
+        redirectPath = (search ? '?' + search.slice(1) : '') + (hash || '');
+      } else if (hasTokenInHash) {
+        redirectPath = hash;
       } else if (search.indexOf('access_token=') !== -1) {
-        search.slice(1).split('&').forEach(function (p) { var kv = p.split('='); if (kv[0] && kv[1]) params[kv[0]] = decodeURIComponent(kv[1]); });
-        hash = '#' + Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+        redirectPath = (search ? '?' + search.slice(1) : '') + (hash || '');
       }
-      var hasTokens = hasTokenInHash || (params.access_token);
+      var hasData = hasCode || hasTokenInHash || redirectPath;
       var isDev = search.indexOf('dev=1') !== -1;
       var scheme = isDev ? 'solartrack-dev://' : 'solartrack://';
-      if (hasTokens) {
-        msg.innerHTML = 'Redirecting to app (dev mode: ' + (isDev ? 'yes' : 'no') + ')...<br><small>If nothing happens, start the app with: npm run dev</small>';
+      if (hasData && redirectPath) {
+        msg.innerHTML = 'Redirecting to app...';
         try {
-          window.location.replace(scheme + 'auth/callback' + hash);
+          window.location.replace(scheme + 'auth/callback' + redirectPath);
           setTimeout(function () { window.close(); }, 500);
         } catch (e) {
           msg.textContent = 'Open SolarTrack to finish signing in. You can close this tab.';
           spinner.style.display = 'none';
         }
       } else {
-        msg.innerHTML = 'No sign-in data. Open SolarTrack and try again.<br><small>URL had dev=1: ' + (isDev ? 'yes' : 'no') + '</small>';
+        msg.innerHTML = 'No sign-in data. Open SolarTrack and try again.';
         spinner.style.display = 'none';
       }
     })();
