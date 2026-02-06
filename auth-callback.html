@@ -23,21 +23,32 @@
   <script>
     (function () {
       var hash = window.location.hash;
+      var search = window.location.search || '';
       var msg = document.getElementById('msg');
       var spinner = document.getElementById('spinner');
-      if (hash && hash.indexOf('access_token=') !== -1) {
+      // Supabase sends tokens in the hash; some flows use query – accept both
+      var hasTokenInHash = hash && hash.indexOf('access_token=') !== -1;
+      var params = {};
+      if (hasTokenInHash) {
+        hash.slice(1).split('&').forEach(function (p) { var kv = p.split('='); if (kv[0] && kv[1]) params[kv[0]] = decodeURIComponent(kv[1]); });
+      } else if (search.indexOf('access_token=') !== -1) {
+        search.slice(1).split('&').forEach(function (p) { var kv = p.split('='); if (kv[0] && kv[1]) params[kv[0]] = decodeURIComponent(kv[1]); });
+        hash = '#' + Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+      }
+      var hasTokens = hasTokenInHash || (params.access_token);
+      var isDev = search.indexOf('dev=1') !== -1;
+      var scheme = isDev ? 'solartrack-dev://' : 'solartrack://';
+      if (hasTokens) {
+        msg.innerHTML = 'Redirecting to app (dev mode: ' + (isDev ? 'yes' : 'no') + ')...<br><small>If nothing happens, start the app with: npm run dev</small>';
         try {
-          var isDev = window.location.search.indexOf('dev=1') !== -1;
-          var scheme = isDev ? 'solartrack-dev://' : 'solartrack://';
           window.location.replace(scheme + 'auth/callback' + hash);
-          msg.textContent = 'Redirecting... You can close this tab if it doesn\'t close automatically.';
           setTimeout(function () { window.close(); }, 500);
         } catch (e) {
           msg.textContent = 'Open SolarTrack to finish signing in. You can close this tab.';
           spinner.style.display = 'none';
         }
       } else {
-        msg.textContent = 'No sign-in data. Open SolarTrack and try again.';
+        msg.innerHTML = 'No sign-in data. Open SolarTrack and try again.<br><small>URL had dev=1: ' + (isDev ? 'yes' : 'no') + '</small>';
         spinner.style.display = 'none';
       }
     })();
